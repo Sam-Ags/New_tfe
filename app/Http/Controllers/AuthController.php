@@ -1,0 +1,108 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Commune;
+use App\Models\User;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rules\Password;
+use Illuminate\View\View;
+
+class AuthController extends Controller
+{
+    public function showLogin(): View
+    {
+        return view('auth.login');
+    }
+
+    public function showAdminLogin(Request $request): View
+    {
+        if (Auth::check()) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
+        return view('auth.login');
+    }
+
+    public function login(Request $request): RedirectResponse
+    {
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required', 'string'],
+        ]);
+
+        if (! User::where('email', $credentials['email'])->exists()) {
+            return back()
+                ->withErrors(['email' => 'Aucun compte inscrit avec cette adresse email.'])
+                ->onlyInput('email');
+        }
+
+        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+            return back()
+                ->withErrors(['email' => 'Identifiants incorrects.'])
+                ->onlyInput('email');
+        }
+
+        $request->session()->regenerate();
+
+        return redirect()->intended(route('incidents.index'));
+    }
+
+    public function showRegister(): View
+    {
+        $communes = Commune::orderBy('department')
+            ->orderBy('name')
+            ->get();
+
+        return view('auth.register', [
+            'communes' => $communes,
+            'communesForSelect' => $communes->map(fn (Commune $commune) => [
+                'id' => $commune->id,
+                'name' => $commune->name,
+                'department' => $commune->department,
+            ])->values(),
+            'departments' => $communes->pluck('department')->unique()->values(),
+        ]);
+    }
+
+    public function register(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'email' => ['required', 'email', 'max:160', 'unique:users,email'],
+            'phone' => ['nullable', 'string', 'max:40'],
+            'commune_id' => ['required', 'exists:communes,id'],
+            'password' => ['required', 'confirmed', Password::min(6)],
+        ]);
+
+        $commune = Commune::findOrFail($validated['commune_id']);
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? null,
+            'commune_id' => $commune->id,
+            'department' => $commune->department,
+            'password' => $validated['password'],
+            'role' => 'citoyen',
+        ]);
+
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        return redirect()->route('incidents.index');
+    }
+
+    public function logout(Request $request): RedirectResponse
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login');
+    }
+}
