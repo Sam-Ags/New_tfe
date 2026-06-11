@@ -1,308 +1,191 @@
-<!DOCTYPE html>
-<html lang="fr">
+﻿<!DOCTYPE html>
+<html class="light" lang="fr">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Gestion des autorités - Smart City</title>
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=optional" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#005F73',
+                        'primary-container': '#0A9396',
+                        surface: '#F4F8FB',
+                        'surface-container-lowest': '#FFFFFF',
+                        'surface-container-low': '#EAF3F8',
+                        'surface-container': '#DDEAF2',
+                        'on-surface': '#102A43',
+                        'on-surface-variant': '#334E68',
+                        secondary: '#486581',
+                        outline: '#829AB1',
+                        'outline-variant': '#BCCCDC',
+                        error: '#B42318',
+                        'error-container': '#FEE4E2',
+                    },
+                    fontFamily: {
+                        sans: ['Public Sans', 'system-ui', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
     <style>
-        :root {
-            --ink: #17212b;
-            --muted: #607080;
-            --line: #dfe7ec;
-            --panel: #ffffff;
-            --soft: #f5f8fa;
-            --brand: #0e7c7b;
-            --brand-dark: #075f61;
-            --danger: #c2410c;
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
 
-        * { box-sizing: border-box; }
-
-        body {
-            margin: 0;
-            font-family: "Instrument Sans", system-ui, sans-serif;
-            color: var(--ink);
-            background: var(--soft);
+        .admin-main {
+            min-height: 100vh;
+            width: calc(100% - 16rem);
+            margin-left: 16rem;
+            min-width: 0;
         }
 
-        .topbar {
-            position: sticky;
-            top: 0;
-            z-index: 20;
-            border-bottom: 1px solid var(--line);
-            background: rgba(255, 255, 255, .94);
-            backdrop-filter: blur(12px);
-        }
-
-        .topbar-inner {
-            max-width: 1120px;
-            margin: 0 auto;
-            padding: 14px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 18px;
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 800;
-        }
-
-        .brand-mark {
-            width: 34px;
-            height: 34px;
-            display: grid;
-            place-items: center;
-            border-radius: 8px;
+        .admin-sidebar {
+            background: linear-gradient(180deg, #073B4C 0%, #005F73 100%);
+            border-color: rgba(255, 255, 255, .18);
             color: #fff;
-            background: var(--brand);
         }
 
-        .nav {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--muted);
-            font-size: 14px;
-            flex-wrap: wrap;
+        .admin-sidebar .text-on-surface,
+        .admin-sidebar .text-secondary {
+            color: rgba(255, 255, 255, .82) !important;
         }
 
-        .nav a {
-            display: inline-flex;
-            align-items: center;
-            min-height: 36px;
-            border-radius: 7px;
-            padding: 8px 10px;
-            color: #334155;
-            background: #f1f5f9;
-            text-decoration: none;
-            font-weight: 700;
+        .admin-sidebar a,
+        .admin-sidebar button {
+            color: rgba(255, 255, 255, .84) !important;
         }
 
-        .nav a:hover {
-            color: var(--brand-dark);
-            background: #dcefed;
+        .admin-sidebar a:hover,
+        .admin-sidebar button:hover {
+            background: rgba(255, 255, 255, .14) !important;
+            color: #fff !important;
         }
 
-        .user-chip {
-            display: inline-flex;
-            align-items: center;
-            min-height: 36px;
-            border: 1px solid var(--line);
-            border-radius: 7px;
-            padding: 8px 10px;
-            color: #334155;
-            background: #fff;
-            font-weight: 700;
+        .admin-sidebar a.bg-primary {
+            background: #F4A261 !important;
+            color: #102A43 !important;
         }
 
-        .logout-form button {
-            min-height: 36px;
-            border: 1px solid #fecaca;
-            border-radius: 7px;
-            padding: 8px 10px;
-            background: #fff7f7;
-            color: var(--danger);
-            font-weight: 700;
-            cursor: pointer;
+        .admin-sidebar a.bg-primary .material-symbols-outlined {
+            color: #102A43 !important;
         }
 
-        .hero {
-            color: #fff;
-            background:
-                linear-gradient(120deg, rgba(10, 58, 64, .92), rgba(20, 93, 89, .72)),
-                url("https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=80") center/cover;
+        .admin-sidebar form {
+            border-color: rgba(255, 255, 255, .18);
         }
 
-        .hero-inner {
-            max-width: 1120px;
-            margin: 0 auto;
-            padding: 58px 20px 42px;
-        }
+        @media (max-width: 1023px) {
+            .admin-sidebar {
+                position: static;
+                width: 100%;
+                height: auto;
+            }
 
-        .hero p {
-            max-width: 700px;
-            margin: 12px 0 0;
-            color: rgba(255,255,255,.86);
-            font-size: 17px;
-            line-height: 1.55;
-        }
-
-        h1 {
-            max-width: 760px;
-            margin: 0;
-            font-size: clamp(34px, 5vw, 56px);
-            line-height: 1.02;
-            letter-spacing: 0;
-        }
-
-        .wrap {
-            max-width: 1120px;
-            margin: 0 auto;
-            padding: 26px 20px 56px;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: .85fr 1.15fr;
-            gap: 18px;
-            align-items: start;
-        }
-
-        .panel, .authority-card {
-            border: 1px solid var(--line);
-            border-radius: 8px;
-            background: var(--panel);
-            box-shadow: 0 12px 32px rgba(16, 24, 40, .05);
-        }
-
-        .panel {
-            padding: 20px;
-        }
-
-        h2 {
-            margin: 0 0 14px;
-            font-size: 22px;
-        }
-
-        label {
-            display: block;
-            margin: 13px 0 6px;
-            color: #334155;
-            font-size: 13px;
-            font-weight: 700;
-        }
-
-        input, select {
-            width: 100%;
-            border: 1px solid #cfd9e0;
-            border-radius: 7px;
-            padding: 11px;
-            background: white;
-            color: var(--ink);
-        }
-
-        input:focus, select:focus {
-            outline: 3px solid rgba(14, 124, 123, .14);
-            border-color: var(--brand);
-        }
-
-        .button {
-            width: 100%;
-            margin-top: 18px;
-            border: 0;
-            border-radius: 7px;
-            padding: 12px 14px;
-            color: #fff;
-            background: var(--brand);
-            font-weight: 800;
-            cursor: pointer;
-        }
-
-        .button:hover { background: var(--brand-dark); }
-
-        .notice {
-            margin-bottom: 18px;
-            padding: 13px 14px;
-            border: 1px solid #bbf7d0;
-            border-radius: 8px;
-            background: #f0fdf4;
-            color: #166534;
-            font-weight: 700;
-        }
-
-        .errors {
-            margin-bottom: 14px;
-            border: 1px solid #fecaca;
-            border-radius: 8px;
-            padding: 12px;
-            background: #fef2f2;
-            color: #991b1b;
-        }
-
-        .authority-list {
-            display: grid;
-            gap: 10px;
-            max-height: 680px;
-            overflow: auto;
-        }
-
-        .authority-card {
-            padding: 14px;
-        }
-
-        .authority-card strong {
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        .meta {
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .badge {
-            display: inline-flex;
-            margin-top: 10px;
-            border-radius: 999px;
-            padding: 5px 9px;
-            background: #edf2f7;
-            color: #334155;
-            font-size: 12px;
-            font-weight: 800;
-        }
-
-        @media (max-width: 900px) {
-            .grid { grid-template-columns: 1fr; }
-            .topbar-inner {
-                align-items: flex-start;
-                flex-direction: column;
+            .admin-main {
+                width: 100%;
+                margin-left: 0;
             }
         }
     </style>
+    @include('partials.theme-head')
 </head>
-<body>
-    <header class="topbar">
-        <div class="topbar-inner">
-            <div class="brand">
-                <div class="brand-mark">SC</div>
-                <span>Smart City Incidents</span>
+<body class="min-h-screen bg-surface font-sans text-on-surface">
+    <aside class="admin-sidebar fixed left-0 top-0 z-30 flex h-screen w-64 flex-col border-r border-outline-variant bg-surface-container-low p-6">
+        <div class="mb-8 flex items-center gap-3">
+            <span class="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-outline-variant">
+                <img class="h-16 w-16 object-contain" src="{{ asset('images/smart-city-incidents-logo.png') }}" alt="Smart City Incidents">
+            </span>
+            <span class="text-sm font-bold leading-tight text-primary">SmartCity<br>Incident</span>
+        </div>
+
+        <div class="mb-10 flex items-center gap-3">
+            <div class="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white">
+                <img class="h-full w-full object-contain p-1" src="{{ asset('images/smart-city-incidents-logo.png') }}" alt="">
             </div>
-            <nav class="nav" aria-label="Navigation">
-                <span class="user-chip">{{ auth()->user()->name }} - {{ auth()->user()->isSuperAdmin() ? 'Super admin' : 'Admin' }}</span>
-                <a href="{{ route('incidents.index') }}">Tableau de bord</a>
-                <a href="{{ route('incidents.index') }}#admin">Gestion incidents</a>
-                <a href="{{ route('incidents.index') }}#stats">Statistiques</a>
-                <a href="{{ route('authorities.create') }}">Gestion autorités</a>
-                <form class="logout-form" method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit">Déconnexion</button>
-                </form>
-            </nav>
+            <div>
+                <p class="font-semibold text-on-surface">{{ auth()->user()->name }}</p>
+                <p class="text-sm text-secondary">{{ auth()->user()->commune?->name ?: 'Admin' }}</p>
+            </div>
         </div>
-    </header>
 
-    <section class="hero">
-        <div class="hero-inner">
-            <h1>Création des comptes autorités</h1>
-            <p>Cette page est réservée aux administrateurs. Elle permet de rattacher une autorité municipale à une commune ou un département.</p>
+        <nav class="flex flex-1 flex-col gap-2">
+            <a class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold text-secondary transition hover:bg-surface-container hover:text-primary" href="{{ route('incidents.index') }}#admin">
+                <span class="material-symbols-outlined">dashboard</span>
+                Tableau de bord
+            </a>
+            <a class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold text-secondary transition hover:bg-surface-container hover:text-primary" href="{{ route('incidents.index') }}#carte">
+                <span class="material-symbols-outlined">map</span>
+                Carte
+            </a>
+            <a class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold text-secondary transition hover:bg-surface-container hover:text-primary" href="{{ route('incidents.index') }}#incidents">
+                <span class="material-symbols-outlined">report_problem</span>
+                Gestion incidents
+            </a>
+            <a class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold text-secondary transition hover:bg-surface-container hover:text-primary" href="{{ route('incidents.index') }}#stats">
+                <span class="material-symbols-outlined">bar_chart</span>
+                Statistiques
+            </a>
+            <a class="flex items-center gap-3 rounded-lg bg-primary px-3 py-3 text-sm font-semibold text-white" href="{{ route('authorities.create') }}">
+                <span class="material-symbols-outlined">account_balance</span>
+                Gestion autorités
+            </a>
+        </nav>
+
+        <form class="border-t border-outline-variant pt-4" method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button class="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold text-secondary transition hover:bg-red-50 hover:text-error" type="submit">
+                <span class="material-symbols-outlined">logout</span>
+                Déconnexion
+            </button>
+        </form>
+    </aside>
+
+    <main class="admin-main px-6 py-10">
+        <div class="mb-6 flex justify-end">
+            @include('partials.theme-toggle')
         </div>
-    </section>
+        <section class="mb-8">
+            <span class="mb-3 block text-xs font-bold uppercase tracking-[0.2em] text-secondary">Autorités municipales</span>
+            <h1 class="text-4xl font-semibold leading-tight text-primary">Gestion des comptes autorités</h1>
+            <p class="mt-3 max-w-3xl text-on-surface-variant">
+                Créez les comptes des administrateurs communaux et des agents techniques.
+            </p>
+        </section>
 
-    <main class="wrap">
         @if (session('success'))
-            <div class="notice">{{ session('success') }}</div>
+            <div class="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 font-semibold text-emerald-800">{{ session('success') }}</div>
+        @endif
+
+        @if (session('created_authority'))
+            <div class="mb-6 rounded-xl border border-primary/20 bg-surface-container-lowest p-5 shadow-sm">
+                <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-[0.16em] text-secondary">Compte créé</p>
+                        <h2 class="mt-1 text-2xl font-semibold text-primary">{{ session('created_authority.name') }}</h2>
+                        <p class="mt-1 text-sm text-secondary">{{ session('created_authority.email') }}{{ session('created_authority.phone') ? ' - '.session('created_authority.phone') : '' }}</p>
+                    </div>
+                    <div class="rounded-xl bg-primary px-5 py-4 text-white">
+                        <p class="text-xs font-bold uppercase tracking-[0.16em] text-white/75">
+                            {{ session('created_authority.role') === 'agent' ? 'Identifiant agent' : 'Identifiant compte' }}
+                        </p>
+                        <p class="mt-1 text-2xl font-bold tracking-wide">{{ session('created_authority.identifier') }}</p>
+                    </div>
+                </div>
+            </div>
         @endif
 
         @if ($errors->any())
-            <div class="errors">
+            <div class="mb-6 rounded-lg border border-error-container bg-red-50 px-4 py-3 text-error">
                 <strong>Corrige les champs suivants :</strong>
-                <ul>
+                <ul class="mt-2 list-disc pl-5">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
@@ -310,136 +193,105 @@
             </div>
         @endif
 
-        <section class="grid">
-            <div class="panel">
-                <h2>Nouvelle autorité</h2>
-                <form method="POST" action="{{ route('authorities.store') }}">
+        <section class="grid grid-cols-1 gap-6 xl:grid-cols-12">
+            <div class="xl:col-span-5">
+                <form method="POST" action="{{ route('authorities.store') }}" class="rounded-xl border border-outline-variant bg-surface-container-lowest p-6 shadow-sm">
                     @csrf
-                    <label for="name">Nom complet</label>
-                    <input id="name" name="name" value="{{ old('name') }}" required autofocus>
+                    <div class="mb-6 flex items-center gap-3">
+                        <div class="flex h-11 w-11 items-center justify-center rounded-lg bg-primary text-white">
+                            <span class="material-symbols-outlined">person_add</span>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-semibold text-on-surface">Nouvelle autorité</h2>
+                            <p class="text-sm text-secondary">Rattachement automatique à {{ auth()->user()->commune?->name ?: 'votre commune' }}.</p>
+                        </div>
+                    </div>
 
-                    <label for="email">Adresse email</label>
-                    <input id="email" type="email" name="email" value="{{ old('email') }}" required>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-secondary" for="name">Nom complet</label>
+                            <input class="h-12 w-full rounded border-outline-variant focus:border-primary focus:ring-primary/20" id="name" name="name" value="{{ old('name') }}" required autofocus>
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-secondary" for="email">Adresse email</label>
+                            <input class="h-12 w-full rounded border-outline-variant focus:border-primary focus:ring-primary/20" id="email" type="email" name="email" value="{{ old('email') }}" required>
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-secondary" for="phone">Téléphone</label>
+                            <input class="h-12 w-full rounded border-outline-variant focus:border-primary focus:ring-primary/20" id="phone" name="phone" value="{{ old('phone') }}">
+                        </div>
+                        <div>
+                            <label class="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-secondary" for="role">Rôle</label>
+                            <select class="h-12 w-full rounded border-outline-variant focus:border-primary focus:ring-primary/20" id="role" name="role" required>
+                                <option value="admin" @selected(old('role') === 'admin')>Administrateur communal</option>
+                                <option value="agent" @selected(old('role') === 'agent')>Agent technique</option>
+                            </select>
+                        </div>
+                        <div class="rounded-lg border border-outline-variant bg-surface-container-low p-4 text-sm text-on-surface-variant">
+                            Ce compte sera automatiquement rattaché à
+                            <strong class="text-primary">{{ auth()->user()->commune?->name ?: 'votre commune' }}</strong>
+                            @if (auth()->user()->department)
+                                dans le département <strong class="text-primary">{{ auth()->user()->department }}</strong>.
+                            @endif
+                        </div>
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div>
+                                <label class="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-secondary" for="password">Mot de passe temporaire</label>
+                                <input class="h-12 w-full rounded border-outline-variant focus:border-primary focus:ring-primary/20" id="password" type="password" name="password" required>
+                            </div>
+                            <div>
+                                <label class="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-secondary" for="password_confirmation">Confirmation</label>
+                                <input class="h-12 w-full rounded border-outline-variant focus:border-primary focus:ring-primary/20" id="password_confirmation" type="password" name="password_confirmation" required>
+                            </div>
+                        </div>
+                    </div>
 
-                    <label for="phone">Téléphone</label>
-                    <input id="phone" name="phone" value="{{ old('phone') }}">
-
-                    <label for="role">Rôle</label>
-                    <select id="role" name="role" required>
-                        <option value="admin" @selected(old('role') === 'admin')>Administrateur communal</option>
-                        <option value="agent" @selected(old('role') === 'agent')>Agent technique</option>
-                        <option value="super_admin" @selected(old('role') === 'super_admin')>Super administrateur départemental</option>
-                    </select>
-
-                    <label for="department">Département</label>
-                    <select id="department" name="department" required>
-                        <option value="">Sélectionnez le département</option>
-                        @foreach ($departments as $department)
-                            <option value="{{ $department }}" @selected(old('department') === $department)>{{ $department }}</option>
-                        @endforeach
-                    </select>
-
-                    <label for="commune_id">Commune</label>
-                    <select id="commune_id" name="commune_id" required disabled>
-                        <option value="">Choisissez d'abord un département</option>
-                    </select>
-
-                    <label for="password">Mot de passe temporaire</label>
-                    <input id="password" type="password" name="password" required>
-
-                    <label for="password_confirmation">Confirmer le mot de passe</label>
-                    <input id="password_confirmation" type="password" name="password_confirmation" required>
-
-                    <button class="button" type="submit">Créer le compte autorité</button>
+                    <button class="mt-6 flex w-full items-center justify-center gap-2 rounded bg-primary px-5 py-4 text-sm font-bold uppercase tracking-wider text-white transition hover:bg-primary-container" type="submit">
+                        Créer le compte
+                        <span class="material-symbols-outlined text-lg">arrow_forward</span>
+                    </button>
                 </form>
             </div>
 
-            <div class="panel">
-                <h2>Services habilités</h2>
-                <div class="authority-list">
-                    @foreach ($authorities as $authority)
-                        <article class="authority-card">
-                            <strong>{{ $authority->name }}</strong>
-                            <div class="meta">Contact : {{ $authority->email }}{{ $authority->phone ? ' - '.$authority->phone : '' }}</div>
-                            <div class="meta">
-                                @if ($authority->role === 'super_admin')
-                                    Département : {{ $authority->department ?? 'Non défini' }}
-                                @else
-                                    {{ $authority->commune?->name ?? 'Commune non définie' }}{{ $authority->commune?->department ? ' - '.$authority->commune->department : '' }}
-                                @endif
-                            </div>
-                            <span class="badge">
-                                @if ($authority->role === 'super_admin')
-                                    Super administrateur départemental
-                                @elseif ($authority->role === 'admin')
-                                    Administrateur communal
-                                @else
-                                    Agent technique
-                                @endif
-                            </span>
-                        </article>
-                    @endforeach
+            <div class="xl:col-span-7">
+                <div class="rounded-xl border border-outline-variant bg-surface-container-lowest shadow-sm">
+                    <div class="border-b border-outline-variant bg-surface-container-low/60 p-5">
+                        <h2 class="text-2xl font-semibold text-on-surface">Services habilités</h2>
+                        <p class="mt-1 text-sm text-secondary">Comptes actifs dans le périmètre autorisé.</p>
+                    </div>
+                    <div class="max-h-[760px] divide-y divide-outline-variant overflow-auto">
+                        @forelse ($authorities as $authority)
+                            <article class="grid gap-4 p-5 md:grid-cols-[1fr_auto]">
+                                <div class="flex items-start gap-3">
+                                    <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-surface-container text-primary">
+                                        <span class="material-symbols-outlined">badge</span>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-on-surface">{{ $authority->name }}</h3>
+                                        <p class="mt-1 inline-flex rounded-full bg-primary px-3 py-1 text-xs font-bold tracking-wide text-white">
+                                            {{ $authority->accountIdentifier() }}
+                                        </p>
+                                        <p class="mt-1 text-sm text-secondary">{{ $authority->email }}{{ $authority->phone ? ' - '.$authority->phone : '' }}</p>
+                                        <p class="mt-1 text-sm text-secondary">
+                                            {{ $authority->commune?->name ?: 'Commune non définie' }}{{ $authority->commune?->department ? ' - '.$authority->commune->department : '' }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <span class="h-fit rounded-full bg-surface-container px-3 py-1 text-xs font-bold text-primary">
+                                    @if ($authority->role === 'admin')
+                                        Administrateur communal
+                                    @else
+                                        Agent technique
+                                    @endif
+                                </span>
+                            </article>
+                        @empty
+                            <div class="p-8 text-center text-secondary">Aucune autorité enregistrée.</div>
+                        @endforelse
+                    </div>
                 </div>
             </div>
         </section>
     </main>
-
-    <script>
-        const communes = @json($communesForSelect);
-        const oldCommuneId = @json(old('commune_id'));
-        const departmentSelect = document.getElementById('department');
-        const communeSelect = document.getElementById('commune_id');
-        const roleSelect = document.getElementById('role');
-
-        function fillCommunes(department, selectedId = null) {
-            const matchingCommunes = communes.filter((commune) => commune.department === department);
-            communeSelect.innerHTML = '';
-
-            if (matchingCommunes.length === 0) {
-                communeSelect.disabled = true;
-                communeSelect.add(new Option("Choisissez d'abord un département", ''));
-                return;
-            }
-
-            communeSelect.disabled = false;
-            communeSelect.add(new Option('Sélectionnez la commune', ''));
-
-            matchingCommunes.forEach((commune) => {
-                const option = new Option(commune.name, commune.id);
-                option.selected = String(commune.id) === String(selectedId);
-                communeSelect.add(option);
-            });
-        }
-
-        departmentSelect.addEventListener('change', () => {
-            fillCommunes(departmentSelect.value);
-        });
-
-        function toggleCommuneRequirement() {
-            const isSuperAdmin = roleSelect.value === 'super_admin';
-            communeSelect.required = !isSuperAdmin;
-
-            if (isSuperAdmin) {
-                communeSelect.disabled = true;
-                communeSelect.innerHTML = '';
-                communeSelect.add(new Option('Aucune commune pour un super administrateur', ''));
-            } else if (departmentSelect.value) {
-                fillCommunes(departmentSelect.value, oldCommuneId);
-            }
-        }
-
-        roleSelect.addEventListener('change', toggleCommuneRequirement);
-
-        if (oldCommuneId) {
-            const selectedCommune = communes.find((commune) => String(commune.id) === String(oldCommuneId));
-
-            if (selectedCommune) {
-                departmentSelect.value = selectedCommune.department;
-                fillCommunes(selectedCommune.department, oldCommuneId);
-            }
-        }
-
-        toggleCommuneRequirement();
-    </script>
 </body>
 </html>

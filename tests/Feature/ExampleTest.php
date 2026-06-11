@@ -195,4 +195,63 @@ class ExampleTest extends TestCase
             ->assertOk()
             ->assertDontSee('Plainte de Lokossa');
     }
+
+    public function test_admin_confirmation_moves_agent_proof_to_resolved_statistics(): void
+    {
+        $lokossa = Commune::create([
+            'name' => 'Lokossa',
+            'department' => 'Mono',
+        ]);
+
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'commune_id' => $lokossa->id,
+            'department' => 'Mono',
+        ]);
+
+        $agent = User::factory()->create([
+            'name' => 'Agent Lokossa',
+            'role' => 'agent',
+            'commune_id' => $lokossa->id,
+            'department' => 'Mono',
+        ]);
+
+        $incident = Incident::create([
+            'citizen_name' => 'Citoyen anonyme',
+            'commune_id' => $lokossa->id,
+            'title' => 'Debut inondation',
+            'category' => 'inondation',
+            'district' => 'Lokossa',
+            'description' => 'Preuve envoyee par agent.',
+            'latitude' => 6.6533,
+            'longitude' => 1.7190,
+            'urgency' => 'urgent',
+            'priority' => 'elevee',
+            'status' => 'en_validation',
+            'assigned_agent_id' => $agent->id,
+            'assigned_to' => $agent->name,
+            'completion_photo_path' => 'uploads/completions/proof.jpg',
+            'completion_submitted_at' => now(),
+        ]);
+
+        $admin->dashboardIncidents()->attach($incident);
+
+        $this->actingAs($admin)
+            ->patch(route('incidents.update', $incident), [
+                'status' => 'resolu',
+                'assigned_agent_id' => $agent->id,
+            ])
+            ->assertRedirect(route('incidents.index'));
+
+        $incident->refresh();
+        $this->assertSame('resolu', $incident->status);
+        $this->assertNotNull($incident->resolved_at);
+
+        $this->actingAs($admin)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertSee('Aucune plainte active dans le tableau de bord')
+            ->assertSee('Résolus')
+            ->assertSee('>1<', false);
+    }
 }

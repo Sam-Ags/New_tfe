@@ -114,6 +114,9 @@ class DatabaseSeeder extends Seeder
         $cotonou = $communes['Cotonou'];
         $calavi = $communes['Abomey-Calavi'];
         $lokossa = $communes['Lokossa'];
+        $adminPassword = env('DEMO_ADMIN_PASSWORD', 'AdminSoutenance@2026');
+        $agentPassword = env('DEMO_AGENT_PASSWORD', 'AgentTerrain@2026');
+        $citizenPassword = env('DEMO_CITIZEN_PASSWORD', 'CitoyenDemo@2026');
 
         User::whereIn('email', [
             'admin@smartcity.test',
@@ -121,6 +124,7 @@ class DatabaseSeeder extends Seeder
             'calavi@smartcity.test',
             'super.littoral@smartcity.test',
         ])->delete();
+        User::where('role', 'super_admin')->delete();
 
         $admin = User::firstOrCreate(
             ['email' => 'admin@mairie-cotonou.bj'],
@@ -128,7 +132,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Direction des Services Techniques',
                 'phone' => '+229 21 30 12 45',
                 'commune_id' => $cotonou->id,
-                'password' => 'password',
+                'password' => $adminPassword,
                 'role' => 'admin',
             ],
         );
@@ -140,23 +144,11 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Service Voirie et Assainissement',
                 'phone' => '+229 21 30 18 62',
                 'commune_id' => $cotonou->id,
-                'password' => 'password',
+                'password' => $agentPassword,
                 'role' => 'agent',
             ],
         );
         $agent->update(['commune_id' => $cotonou->id, 'department' => $cotonou->department, 'role' => 'agent']);
-
-        $superAdmin = User::firstOrCreate(
-            ['email' => 'super.littoral@smartcity.test'],
-            [
-                'name' => 'Super Admin Littoral',
-                'phone' => '+229 21 30 00 01',
-                'department' => 'Littoral',
-                'password' => 'password',
-                'role' => 'super_admin',
-            ],
-        );
-        $superAdmin->update(['commune_id' => null, 'department' => 'Littoral', 'role' => 'super_admin']);
 
         $calaviAdmin = User::firstOrCreate(
             ['email' => 'technique@mairie-calavi.bj'],
@@ -164,7 +156,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Service Technique Municipal',
                 'phone' => '+229 21 36 05 11',
                 'commune_id' => $calavi->id,
-                'password' => 'password',
+                'password' => $adminPassword,
                 'role' => 'admin',
             ],
         );
@@ -176,7 +168,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Service Technique Municipal de Lokossa',
                 'phone' => '+229 22 41 10 00',
                 'commune_id' => $lokossa->id,
-                'password' => 'password',
+                'password' => $adminPassword,
                 'role' => 'admin',
             ],
         );
@@ -188,7 +180,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Citoyen Demo',
                 'phone' => '+229 01 90 00 30 00',
                 'commune_id' => $cotonou->id,
-                'password' => 'password',
+                'password' => $citizenPassword,
                 'role' => 'citoyen',
             ],
         );

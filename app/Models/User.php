@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'email', 'phone', 'password', 'role', 'commune_id', 'department'])]
+#[Fillable(['name', 'email', 'phone', 'npi', 'profile_photo_path', 'password', 'role', 'commune_id', 'department', 'address', 'sex', 'created_by_user_id'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -53,6 +53,11 @@ class User extends Authenticatable
         return $this->belongsTo(Commune::class);
     }
 
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id');
+    }
+
     public function urbanNotifications(): HasMany
     {
         return $this->hasMany(UrbanNotification::class);
@@ -68,13 +73,30 @@ class User extends Authenticatable
         return $this->role === 'agent';
     }
 
-    public function isSuperAdmin(): bool
-    {
-        return $this->role === 'super_admin';
-    }
-
     public function canManageIncidents(): bool
     {
-        return in_array($this->role, ['admin', 'agent', 'super_admin'], true);
+        return in_array($this->role, ['admin', 'agent'], true);
+    }
+
+    public function assignmentLabel(): string
+    {
+        $details = collect([
+            $this->phone ? 'Tel: '.$this->phone : null,
+            $this->npi ? 'NPI: '.$this->npi : null,
+            $this->email,
+        ])->filter()->implode(' | ');
+
+        return $details ? $this->name.' - '.$details : $this->name;
+    }
+
+    public function accountIdentifier(): string
+    {
+        $prefix = match ($this->role) {
+            'agent' => 'AGT',
+            'admin' => 'ADM',
+            default => 'USR',
+        };
+
+        return $prefix.'-'.str_pad((string) $this->id, 6, '0', STR_PAD_LEFT);
     }
 }

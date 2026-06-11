@@ -54,13 +54,14 @@
         }
 
         .brand-mark {
-            width: 40px;
-            height: 40px;
-            display: grid;
-            place-items: center;
-            border-radius: 8px;
-            color: #fff;
-            background: var(--brand);
+            width: 64px;
+            height: 64px;
+            display: block;
+            border-radius: 999px;
+            object-fit: contain;
+            background: #fff;
+            padding: 5px;
+            box-shadow: 0 2px 10px rgba(15, 23, 42, .10);
         }
 
         .tabs {
@@ -164,13 +165,18 @@
             }
         }
     </style>
+    @include('partials.theme-head')
 </head>
 <body>
     <main class="page">
         <section class="auth">
             <div class="brand">
-                <div class="brand-mark">SC</div>
-                <div>Smart City Incidents</div>
+                <img class="brand-mark" src="{{ asset('images/smart-city-incidents-logo.png') }}" alt="Smart City Incidents">
+                <div>SmartCity Incident</div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;margin-bottom:18px;">
+                @include('partials.theme-toggle')
             </div>
 
             <div class="tabs" aria-label="Accès utilisateur">

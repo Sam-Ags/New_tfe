@@ -24,6 +24,7 @@ class Incident extends Model
     public const STATUSES = [
         'en_attente' => 'En attente',
         'en_cours' => 'En cours',
+        'en_validation' => 'En validation',
         'resolu' => 'Résolu',
     ];
 
@@ -63,6 +64,9 @@ class Incident extends Model
         'assigned_to',
         'assigned_agent_id',
         'photo_path',
+        'completion_photo_path',
+        'completion_note',
+        'completion_submitted_at',
         'taken_at',
         'resolved_at',
     ];
@@ -72,6 +76,7 @@ class Incident extends Model
         return [
             'latitude' => 'float',
             'longitude' => 'float',
+            'completion_submitted_at' => 'datetime',
             'taken_at' => 'datetime',
             'resolved_at' => 'datetime',
         ];
@@ -141,5 +146,15 @@ class Incident extends Model
     public function urbanNotifications(): HasMany
     {
         return $this->hasMany(UrbanNotification::class);
+    }
+
+    public function photos(): HasMany
+    {
+        return $this->hasMany(IncidentPhoto::class);
+    }
+
+    public function completionPhotos(): HasMany
+    {
+        return $this->hasMany(IncidentCompletionPhoto::class);
     }
 }
