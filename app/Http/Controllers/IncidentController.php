@@ -6,10 +6,10 @@ use App\Models\Commune;
 use App\Models\Incident;
 use App\Models\UrbanNotification;
 use App\Models\User;
+use App\Services\CloudinaryImageUploader;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
@@ -405,9 +405,6 @@ class IncidentController extends Controller
             'completion_photos.*.mimetypes' => 'Chaque preuve envoyée doit être une image valide.',
         ]);
 
-        $directory = public_path('uploads/completions');
-        File::ensureDirectoryExists($directory);
-
         $uploadedPhotos = collect($request->file('completion_photos', []));
 
         if ($request->hasFile('completion_photo')) {
@@ -416,12 +413,7 @@ class IncidentController extends Controller
 
         $photoPaths = $uploadedPhotos
             ->filter()
-            ->map(function ($file) use ($directory): string {
-                $filename = uniqid('completion_', true).'.'.$this->uploadedImageExtension($file);
-                $file->move($directory, $filename);
-
-                return 'uploads/completions/'.$filename;
-            })
+            ->map(fn ($file): string => $this->storeUploadedImage($file, 'completions', 'completion'))
             ->values();
 
         $incident->update([
@@ -496,9 +488,6 @@ class IncidentController extends Controller
                 ->withInput();
         }
 
-        $directory = public_path('uploads/incidents');
-        File::ensureDirectoryExists($directory);
-
         $uploadedPhotos = collect($request->file('photos', []));
 
         if ($request->hasFile('photo')) {
@@ -507,12 +496,7 @@ class IncidentController extends Controller
 
         $photoPaths = $uploadedPhotos
             ->filter()
-            ->map(function ($file) use ($directory): string {
-                $filename = uniqid('incident_', true).'.'.$this->uploadedImageExtension($file);
-                $file->move($directory, $filename);
-
-                return 'uploads/incidents/'.$filename;
-            })
+            ->map(fn ($file): string => $this->storeUploadedImage($file, 'incidents', 'incident'))
             ->values();
 
         $category = $this->categoryFromTitle($validated['title']);
@@ -633,13 +617,8 @@ class IncidentController extends Controller
         ]);
 
         if ($request->hasFile('photo')) {
-            $directory = public_path('uploads/incidents');
-            File::ensureDirectoryExists($directory);
-
             $file = $request->file('photo');
-            $filename = uniqid('incident_', true).'.'.$this->uploadedImageExtension($file);
-            $file->move($directory, $filename);
-            $validated['photo_path'] = 'uploads/incidents/'.$filename;
+            $validated['photo_path'] = $this->storeUploadedImage($file, 'incidents', 'incident');
         }
 
         if ($this->needsCustomIncidentTitle($validated['title'])) {
@@ -775,6 +754,11 @@ class IncidentController extends Controller
                 }
             },
         ];
+    }
+
+    private function storeUploadedImage($file, string $folder, string $prefix): string
+    {
+        return (new CloudinaryImageUploader())->upload($file, $folder, $prefix);
     }
 
     private function isUploadedImage($file): bool

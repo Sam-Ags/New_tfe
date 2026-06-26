@@ -82,7 +82,7 @@
             <p class="mb-6 text-2xl font-extrabold text-primary sm:text-3xl">SmartCity</p>
 
             <div class="home-logo grid h-52 w-52 place-items-center overflow-hidden rounded-full bg-white ring-1 ring-outline-variant sm:h-64 sm:w-64">
-                <img class="h-40 w-40 object-contain sm:h-52 sm:w-52" src="{{ asset('images/smart-city-incidents-logo.png') }}" alt="SmartCity Incident">
+                <img class="h-40 w-40 object-contain sm:h-52 sm:w-52" src="{{ asset('images/smart-city-incidents-logo-256.png') }}" alt="SmartCity Incident">
             </div>
 
             <h1 class="home-title mt-8 max-w-3xl font-extrabold text-on-surface">

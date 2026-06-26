@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Commune;
 use App\Models\User;
+use App\Services\CloudinaryImageUploader;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
@@ -128,14 +128,8 @@ class AuthController extends Controller
         ]);
 
         if ($request->hasFile('profile_photo')) {
-            $directory = public_path('uploads/profiles');
-            File::ensureDirectoryExists($directory);
-
             $file = $request->file('profile_photo');
-            $filename = uniqid('agent_', true).'.'.$file->getClientOriginalExtension();
-            $file->move($directory, $filename);
-
-            $validated['profile_photo_path'] = 'uploads/profiles/'.$filename;
+            $validated['profile_photo_path'] = (new CloudinaryImageUploader())->upload($file, 'profiles', 'agent');
         }
 
         unset($validated['profile_photo']);

@@ -300,7 +300,7 @@
     <header class="fixed top-0 z-50 flex w-full items-center justify-between border-b border-outline-variant bg-surface/95 px-6 py-3 backdrop-blur md:px-8">
         <a class="flex items-center gap-3 no-underline" href="{{ route('incidents.public.home') }}">
             <span class="grid h-16 w-16 place-items-center overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-outline-variant">
-                <img class="h-14 w-14 object-contain" src="{{ asset('images/smart-city-incidents-logo.png') }}" alt="Smart City Incidents">
+                <img class="h-14 w-14 object-contain" src="{{ asset('images/smart-city-incidents-logo-256.png') }}" alt="Smart City Incidents">
             </span>
             <span class="hidden text-xl font-semibold text-primary sm:inline">SmartCity Incident</span>
         </a>
@@ -417,8 +417,8 @@
                             <label class="group flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-outline-variant bg-surface-container-low p-6 text-center transition hover:bg-surface-container">
                                 <span class="material-symbols-outlined mb-3 text-4xl text-primary transition group-hover:scale-110">photo_camera</span>
                                 <span class="font-semibold text-primary">Prendre une photo</span>
-                                <span class="mt-1 text-sm text-secondary">Vous pouvez reprendre plusieurs photos une par une.</span>
-                                <input id="photo-camera" class="hidden" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif" capture="environment">
+                                <span class="mt-1 text-sm text-secondary">Prenez la photo avec l’appareil du téléphone.</span>
+                                <input id="photo-camera" class="hidden" type="file" name="photo" accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif" capture="environment">
                             </label>
                             <label class="group flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-outline-variant bg-surface-container-low p-6 text-center transition hover:bg-surface-container">
                                 <span class="material-symbols-outlined mb-3 text-4xl text-primary transition group-hover:scale-110">folder_open</span>
@@ -684,13 +684,30 @@
         });
 
         function syncPhotoInputFiles() {
+            if (typeof DataTransfer === 'undefined') return;
+
             const dataTransfer = new DataTransfer();
             selectedPhotos.forEach((file) => dataTransfer.items.add(file));
             photoInput.files = dataTransfer.files;
         }
 
+        function cameraPhotoFile() {
+            return photoCameraInput.files && photoCameraInput.files.length > 0
+                ? photoCameraInput.files[0]
+                : null;
+        }
+
+        function hasAnyPhoto() {
+            return Boolean(cameraPhotoFile()) || selectedPhotos.length > 0;
+        }
+
         function renderPhotoPreviews() {
-            if (selectedPhotos.length === 0) {
+            const previewPhotos = [
+                ...(cameraPhotoFile() ? [{ file: cameraPhotoFile(), source: 'camera', index: 0 }] : []),
+                ...selectedPhotos.map((file, index) => ({ file, source: 'gallery', index })),
+            ];
+
+            if (previewPhotos.length === 0) {
                 photoLabel.textContent = 'Aucune photo ajoutée pour le moment.';
                 photoPreviewWrap.classList.add('hidden');
                 photoPreviewWrap.classList.remove('grid');
@@ -698,20 +715,20 @@
                 return;
             }
 
-            photoLabel.textContent = `${selectedPhotos.length} photo${selectedPhotos.length > 1 ? 's' : ''} ajoutée${selectedPhotos.length > 1 ? 's' : ''}.`;
+            photoLabel.textContent = `${previewPhotos.length} photo${previewPhotos.length > 1 ? 's' : ''} ajoutée${previewPhotos.length > 1 ? 's' : ''}.`;
             photoPreviewWrap.innerHTML = '';
             photoPreviewWrap.classList.remove('hidden');
             photoPreviewWrap.classList.add('grid');
 
-            selectedPhotos.forEach((file, index) => {
+            previewPhotos.forEach(({ file, source, index }, previewIndex) => {
                 const url = URL.createObjectURL(file);
                 const card = document.createElement('div');
                 card.className = 'overflow-hidden rounded-lg border border-outline-variant bg-white';
                 card.innerHTML = `
-                    <img class="h-36 w-full object-cover" src="${url}" alt="Aperçu de la photo ${index + 1}">
+                    <img class="h-36 w-full object-cover" src="${url}" alt="Aperçu de la photo ${previewIndex + 1}">
                     <div class="flex items-center justify-between gap-2 p-2">
                         <p class="min-w-0 truncate text-sm font-semibold text-on-surface-variant" title="${file.name}">${file.name}</p>
-                        <button class="shrink-0 rounded bg-red-50 px-2 py-1 text-xs font-bold text-error" type="button" data-remove-photo="${index}">Supprimer</button>
+                        <button class="shrink-0 rounded bg-red-50 px-2 py-1 text-xs font-bold text-error" type="button" data-remove-photo-source="${source}" data-remove-photo="${index}">Supprimer</button>
                     </div>
                 `;
                 const previewImage = card.querySelector('img');
@@ -752,7 +769,6 @@
             preparingPhotos = false;
             syncPhotoInputFiles();
             renderPhotoPreviews();
-            photoCameraInput.value = '';
             photoGalleryInput.value = '';
         }
 
@@ -843,7 +859,8 @@
         }
 
         photoCameraInput.addEventListener('change', () => {
-            addSelectedPhotoFiles(photoCameraInput.files);
+            photoLabel.classList.remove('text-error');
+            renderPhotoPreviews();
         });
 
         photoGalleryInput.addEventListener('change', () => {
@@ -854,7 +871,12 @@
             const button = event.target.closest('[data-remove-photo]');
             if (!button) return;
 
-            selectedPhotos.splice(Number(button.dataset.removePhoto), 1);
+            if (button.dataset.removePhotoSource === 'camera') {
+                photoCameraInput.value = '';
+            } else {
+                selectedPhotos.splice(Number(button.dataset.removePhoto), 1);
+            }
+
             syncPhotoInputFiles();
             renderPhotoPreviews();
         });
@@ -867,7 +889,7 @@
                 return;
             }
 
-            if (selectedPhotos.length === 0) {
+            if (!hasAnyPhoto()) {
                 event.preventDefault();
                 photoLabel.textContent = 'Ajoutez au moins une photo avant d’envoyer le signalement.';
                 photoLabel.classList.add('text-error');

@@ -101,14 +101,14 @@
     <aside class="admin-sidebar fixed left-0 top-0 z-30 flex h-screen w-64 flex-col border-r border-outline-variant bg-surface-container-low p-6">
         <div class="mb-8 flex items-center gap-3">
             <span class="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-outline-variant">
-                <img class="h-16 w-16 object-contain" src="{{ asset('images/smart-city-incidents-logo.png') }}" alt="Smart City Incidents">
+                <img class="h-16 w-16 object-contain" src="{{ asset('images/smart-city-incidents-logo-256.png') }}" alt="Smart City Incidents">
             </span>
             <span class="text-sm font-bold leading-tight text-primary">SmartCity<br>Incident</span>
         </div>
 
         <div class="mb-10 flex items-center gap-3">
             <div class="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white">
-                <img class="h-full w-full object-contain p-1" src="{{ asset('images/smart-city-incidents-logo.png') }}" alt="">
+                        <img class="h-full w-full object-contain p-1" src="{{ asset('images/smart-city-incidents-logo-256.png') }}" alt="">
             </div>
             <div>
                 <p class="font-semibold text-on-surface">{{ auth()->user()->name }}</p>
