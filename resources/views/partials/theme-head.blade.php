@@ -8,7 +8,7 @@
         document.documentElement.classList.toggle('light', theme !== 'dark');
     })();
 </script>
-<link rel="preload" as="image" href="{{ asset('images/smart-city-incidents-logo.png') }}">
+<link rel="preload" as="image" href="{{ asset('images/smart-city-incidents-logo-256.png') }}">
 <style>
     :root {
         color-scheme: light;
@@ -23,7 +23,7 @@
         position: fixed;
         inset: 0;
         z-index: 2147483647;
-        background: #F4F8FB url("{{ asset('images/smart-city-incidents-logo.png') }}") center / 6rem auto no-repeat;
+        background: #F4F8FB url("{{ asset('images/smart-city-incidents-logo-256.png') }}") center / 6rem auto no-repeat;
     }
 
     html[data-theme="dark"].smartcity-loading::before {

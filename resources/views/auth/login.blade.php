@@ -46,7 +46,7 @@
     <header class="flex w-full items-center justify-between border-b border-outline-variant bg-surface px-6 py-3 md:px-8">
         <a class="flex items-center gap-3 no-underline" href="{{ route('incidents.public.home') }}">
             <span class="grid h-16 w-16 place-items-center overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-outline-variant">
-                <img class="h-14 w-14 object-contain" src="{{ asset('images/smart-city-incidents-logo.png') }}" alt="Smart City Incidents">
+                <img class="h-14 w-14 object-contain" src="{{ asset('images/smart-city-incidents-logo-256.png') }}" alt="Smart City Incidents">
             </span>
             <span class="hidden text-xl font-semibold text-primary sm:inline">SmartCity Incident</span>
         </a>

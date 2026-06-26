@@ -171,7 +171,7 @@
     <main class="page">
         <section class="auth">
             <div class="brand">
-                <img class="brand-mark" src="{{ asset('images/smart-city-incidents-logo.png') }}" alt="Smart City Incidents">
+                <img class="brand-mark" src="{{ asset('images/smart-city-incidents-logo-256.png') }}" alt="Smart City Incidents">
                 <div>SmartCity Incident</div>
             </div>
 
