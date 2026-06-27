@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -760,7 +761,19 @@ class IncidentController extends Controller
 
     private function storeUploadedImage($file, string $folder, string $prefix): string
     {
-        return (new CloudinaryImageUploader())->upload($file, $folder, $prefix);
+        try {
+            return (new CloudinaryImageUploader())->upload($file, $folder, $prefix);
+        } catch (\Throwable $exception) {
+            Log::warning('Cloudinary upload failed.', [
+                'folder' => $folder,
+                'prefix' => $prefix,
+                'message' => $exception->getMessage(),
+            ]);
+
+            throw ValidationException::withMessages([
+                'photos' => 'La photo n’a pas pu être envoyée vers Cloudinary. Vérifiez les permissions de la clé API ou utilisez un upload preset non signé.',
+            ]);
+        }
     }
 
     private function isUploadedImage($file): bool

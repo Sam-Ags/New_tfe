@@ -18,7 +18,7 @@ class CloudinaryImageUploader
 
     public function upload(UploadedFile $file, string $folder, string $prefix): string
     {
-        if (! config('services.cloudinary.cloud_name') || ! config('services.cloudinary.api_key') || ! config('services.cloudinary.api_secret')) {
+        if (! config('services.cloudinary.cloud_name') || (! $this->usesUnsignedPreset() && (! config('services.cloudinary.api_key') || ! config('services.cloudinary.api_secret')))) {
             throw new RuntimeException('La configuration Cloudinary est incomplète.');
         }
 
@@ -31,8 +31,13 @@ class CloudinaryImageUploader
         $params = [
             'folder' => $this->folderPath($folder),
             'public_id' => $prefix.'_'.now()->format('YmdHis').'_'.Str::random(10),
-            'timestamp' => time(),
         ];
+
+        if ($this->usesUnsignedPreset()) {
+            $params['upload_preset'] = config('services.cloudinary.upload_preset');
+        } else {
+            $params['timestamp'] = time();
+        }
 
         $handle = fopen($path, 'rb');
 
@@ -49,14 +54,7 @@ class CloudinaryImageUploader
                         'contents' => $handle,
                         'filename' => $file->getClientOriginalName(),
                     ],
-                    [
-                        'name' => 'api_key',
-                        'contents' => config('services.cloudinary.api_key'),
-                    ],
-                    [
-                        'name' => 'signature',
-                        'contents' => $this->signature($params),
-                    ],
+                    ...$this->signedParams($params),
                     ...$this->multipartParams($params),
                 ],
             ]);
@@ -75,6 +73,29 @@ class CloudinaryImageUploader
         }
 
         return $data['secure_url'];
+    }
+
+    private function usesUnsignedPreset(): bool
+    {
+        return filled(config('services.cloudinary.upload_preset'));
+    }
+
+    private function signedParams(array $params): array
+    {
+        if ($this->usesUnsignedPreset()) {
+            return [];
+        }
+
+        return [
+            [
+                'name' => 'api_key',
+                'contents' => config('services.cloudinary.api_key'),
+            ],
+            [
+                'name' => 'signature',
+                'contents' => $this->signature($params),
+            ],
+        ];
     }
 
     private function client(): Client
