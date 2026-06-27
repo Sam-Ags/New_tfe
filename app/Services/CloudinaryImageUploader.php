@@ -22,13 +22,19 @@ class CloudinaryImageUploader
             throw new RuntimeException('La configuration Cloudinary est incomplète.');
         }
 
+        $path = $file->getPathname();
+
+        if (! $file->isValid() || ! is_file($path) || (int) $file->getSize() <= 0) {
+            throw new RuntimeException('Le fichier envoyé est vide ou illisible.');
+        }
+
         $params = [
             'folder' => $this->folderPath($folder),
             'public_id' => $prefix.'_'.now()->format('YmdHis').'_'.Str::random(10),
             'timestamp' => time(),
         ];
 
-        $handle = fopen($file->getRealPath(), 'rb');
+        $handle = fopen($path, 'rb');
 
         if (! $handle) {
             throw new RuntimeException('Le fichier envoyé est illisible.');

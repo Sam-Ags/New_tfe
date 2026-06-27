@@ -747,10 +747,12 @@ class IncidentController extends Controller
         return [
             ...$rules,
             'file',
+            'min:1',
             'max:20480',
-            function (string $attribute, mixed $value): void {
+            function (string $attribute, mixed $value, \Closure $fail): void {
                 if (! $this->isUploadedImage($value)) {
                     $this->logUnrecognizedUploadedImage($attribute, $value);
+                    $fail('Le fichier envoye doit etre une image valide.');
                 }
             },
         ];

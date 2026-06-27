@@ -121,7 +121,7 @@ class AuthController extends Controller
             'npi' => ['nullable', 'string', 'max:80'],
             'address' => ['nullable', 'string', 'max:255'],
             'sex' => ['nullable', 'in:homme,femme,autre'],
-            'profile_photo' => ['nullable', 'image', 'max:8192'],
+            'profile_photo' => ['nullable', 'image', 'min:1', 'max:8192'],
         ], [
             'email.unique' => 'Cette adresse email est déjà utilisée.',
             'profile_photo.image' => 'La photo de profil doit être une image.',
