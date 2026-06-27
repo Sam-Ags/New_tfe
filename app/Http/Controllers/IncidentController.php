@@ -393,6 +393,9 @@ class IncidentController extends Controller
         abort_unless($user->isAgent(), 403);
         abort_if($incident->assigned_agent_id !== $user->id, 403);
 
+        $this->removeEmptyUploadedFiles($request, 'completion_photo');
+        $this->removeEmptyUploadedFiles($request, 'completion_photos');
+
         $validated = $request->validate([
             'completion_photo' => $this->uploadedImageRules('nullable', 'required_without:completion_photos'),
             'completion_photos' => ['nullable', 'array', 'required_without:completion_photo'],
@@ -450,6 +453,9 @@ class IncidentController extends Controller
 
     public function storePublic(Request $request): RedirectResponse
     {
+        $this->removeEmptyUploadedFiles($request, 'photo');
+        $this->removeEmptyUploadedFiles($request, 'photos');
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:160'],
             'custom_title' => [Rule::requiredIf(fn () => $this->needsCustomIncidentTitle($request->input('title'))), 'nullable', 'string', 'max:160'],
@@ -597,6 +603,9 @@ class IncidentController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $user = Auth::user();
+
+        $this->removeEmptyUploadedFiles($request, 'photo');
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:160'],
             'custom_title' => [Rule::requiredIf(fn () => $this->needsCustomIncidentTitle($request->input('title'))), 'nullable', 'string', 'max:160'],
@@ -758,6 +767,32 @@ class IncidentController extends Controller
                 }
             },
         ];
+    }
+
+    private function removeEmptyUploadedFiles(Request $request, string $field): void
+    {
+        $files = $request->file($field);
+
+        if (is_array($files)) {
+            $files = collect($files)
+                ->filter(fn ($file) => $file instanceof \Illuminate\Http\UploadedFile && $file->isValid() && (int) $file->getSize() > 0)
+                ->values()
+                ->all();
+
+            if ($files === []) {
+                $request->files->remove($field);
+
+                return;
+            }
+
+            $request->files->set($field, $files);
+
+            return;
+        }
+
+        if ($files instanceof \Illuminate\Http\UploadedFile && (! $files->isValid() || (int) $files->getSize() <= 0)) {
+            $request->files->remove($field);
+        }
     }
 
     private function storeUploadedImage($file, string $folder, string $prefix): string

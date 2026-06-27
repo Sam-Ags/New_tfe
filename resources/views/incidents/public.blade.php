@@ -498,8 +498,11 @@
         let preparingPhotos = false;
         const maxPhotoDimension = 960;
         const photoCompressionQuality = 0.7;
+        const canSyncPreparedPhotos = typeof DataTransfer !== 'undefined';
         const acceptedPhotoExtensions = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'heic', 'heif']);
         const heicPhotoTypes = new Set(['image/heic', 'image/heif']);
+
+        photoInput.disabled = true;
 
         function toggleCustomTitle() {
             const needsCustomTitle = titleSelect.value.toLowerCase().includes('autre');
@@ -684,11 +687,17 @@
         });
 
         function syncPhotoInputFiles() {
-            if (typeof DataTransfer === 'undefined') return;
+            if (!canSyncPreparedPhotos) {
+                photoInput.disabled = true;
+                return;
+            }
 
             const dataTransfer = new DataTransfer();
-            selectedPhotos.forEach((file) => dataTransfer.items.add(file));
+            selectedPhotos
+                .filter((file) => file && file.size > 0)
+                .forEach((file) => dataTransfer.items.add(file));
             photoInput.files = dataTransfer.files;
+            photoInput.disabled = dataTransfer.files.length === 0;
         }
 
         function cameraPhotoFile() {
@@ -769,7 +778,9 @@
             preparingPhotos = false;
             syncPhotoInputFiles();
             renderPhotoPreviews();
-            photoGalleryInput.value = '';
+            if (canSyncPreparedPhotos) {
+                photoGalleryInput.value = '';
+            }
         }
 
         function preparePhotoFile(file) {
@@ -881,6 +892,21 @@
             renderPhotoPreviews();
         });
 
+        function preparePhotoInputsForSubmit() {
+            if (canSyncPreparedPhotos) {
+                syncPhotoInputFiles();
+                photoGalleryInput.removeAttribute('name');
+                return;
+            }
+
+            photoInput.disabled = true;
+            if (photoGalleryInput.files && photoGalleryInput.files.length > 0) {
+                photoGalleryInput.name = 'photos[]';
+            } else {
+                photoGalleryInput.removeAttribute('name');
+            }
+        }
+
         form.addEventListener('submit', (event) => {
             if (preparingPhotos) {
                 event.preventDefault();
@@ -898,7 +924,10 @@
 
             photoLabel.classList.remove('text-error');
 
-            if (isLocationReady()) return;
+            if (isLocationReady()) {
+                preparePhotoInputsForSubmit();
+                return;
+            }
             event.preventDefault();
             if (geolocationVerifiedInput.value === '1' && latitudeInput.value && longitudeInput.value) {
                 locationStatus.textContent = 'Zone non prise en charge. Le signalement ne peut pas être envoyé depuis cette position.';

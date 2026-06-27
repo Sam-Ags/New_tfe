@@ -116,6 +116,8 @@ class AuthController extends Controller
 
         abort_unless($user->isAgent(), 403);
 
+        $this->removeEmptyUploadedFiles($request, 'profile_photo');
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email', 'max:160', Rule::unique('users', 'email')->ignore($user->id)],
@@ -158,5 +160,14 @@ class AuthController extends Controller
         return redirect()
             ->to(route('incidents.index').'#profil')
             ->with('success', 'Profil agent mis à jour.');
+    }
+
+    private function removeEmptyUploadedFiles(Request $request, string $field): void
+    {
+        $file = $request->file($field);
+
+        if ($file instanceof \Illuminate\Http\UploadedFile && (! $file->isValid() || (int) $file->getSize() <= 0)) {
+            $request->files->remove($field);
+        }
     }
 }
