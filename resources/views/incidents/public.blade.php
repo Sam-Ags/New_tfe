@@ -427,7 +427,7 @@
                                 <input id="photo-gallery" class="hidden" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif" multiple>
                             </label>
                         </div>
-                        <input id="photo" class="hidden" type="file" name="photos[]" accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif" multiple>
+                        <input id="photo" class="hidden" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif" multiple>
                         <p class="text-sm font-semibold text-secondary" id="photo-label">Aucune photo ajoutée pour le moment.</p>
                         <div class="hidden grid-cols-1 gap-3 rounded-xl border border-outline-variant bg-surface-container-lowest p-3 sm:grid-cols-2" id="photo-preview-wrap"></div>
                     </div>
@@ -503,6 +503,7 @@
         const heicPhotoTypes = new Set(['image/heic', 'image/heif']);
 
         photoInput.disabled = true;
+        photoInput.removeAttribute('name');
 
         function toggleCustomTitle() {
             const needsCustomTitle = titleSelect.value.toLowerCase().includes('autre');
@@ -689,6 +690,7 @@
         function syncPhotoInputFiles() {
             if (!canSyncPreparedPhotos) {
                 photoInput.disabled = true;
+                photoInput.removeAttribute('name');
                 return;
             }
 
@@ -698,16 +700,23 @@
                 .forEach((file) => dataTransfer.items.add(file));
             photoInput.files = dataTransfer.files;
             photoInput.disabled = dataTransfer.files.length === 0;
+            if (dataTransfer.files.length > 0) {
+                photoInput.name = 'photos[]';
+            } else {
+                photoInput.removeAttribute('name');
+            }
         }
 
         function cameraPhotoFile() {
-            return photoCameraInput.files && photoCameraInput.files.length > 0
+            const file = photoCameraInput.files && photoCameraInput.files.length > 0
                 ? photoCameraInput.files[0]
                 : null;
+
+            return file && file.size > 0 ? file : null;
         }
 
         function hasAnyPhoto() {
-            return Boolean(cameraPhotoFile()) || selectedPhotos.length > 0;
+            return Boolean(cameraPhotoFile()) || selectedPhotos.some((file) => file && file.size > 0);
         }
 
         function renderPhotoPreviews() {
@@ -893,17 +902,23 @@
         });
 
         function preparePhotoInputsForSubmit() {
+            photoCameraInput.disabled = !cameraPhotoFile();
+
             if (canSyncPreparedPhotos) {
                 syncPhotoInputFiles();
                 photoGalleryInput.removeAttribute('name');
+                photoGalleryInput.disabled = true;
                 return;
             }
 
             photoInput.disabled = true;
+            photoInput.removeAttribute('name');
             if (photoGalleryInput.files && photoGalleryInput.files.length > 0) {
                 photoGalleryInput.name = 'photos[]';
+                photoGalleryInput.disabled = false;
             } else {
                 photoGalleryInput.removeAttribute('name');
+                photoGalleryInput.disabled = true;
             }
         }
 

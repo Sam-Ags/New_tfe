@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -396,7 +397,7 @@ class IncidentController extends Controller
         $this->removeEmptyUploadedFiles($request, 'completion_photo');
         $this->removeEmptyUploadedFiles($request, 'completion_photos');
 
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'completion_photo' => $this->uploadedImageRules('nullable', 'required_without:completion_photos'),
             'completion_photos' => ['nullable', 'array', 'required_without:completion_photo'],
             'completion_photos.*' => $this->uploadedImageRules(),
@@ -409,6 +410,8 @@ class IncidentController extends Controller
             'completion_photo.mimetypes' => 'La preuve envoyée doit être une image valide.',
             'completion_photos.*.mimetypes' => 'Chaque preuve envoyée doit être une image valide.',
         ]);
+
+        $validated = $validator->validate();
 
         $uploadedPhotos = collect($request->file('completion_photos', []));
 
@@ -456,7 +459,7 @@ class IncidentController extends Controller
         $this->removeEmptyUploadedFiles($request, 'photo');
         $this->removeEmptyUploadedFiles($request, 'photos');
 
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'title' => ['required', 'string', 'max:160'],
             'custom_title' => [Rule::requiredIf(fn () => $this->needsCustomIncidentTitle($request->input('title'))), 'nullable', 'string', 'max:160'],
             'urgency' => ['required', 'in:normal,urgent,critique'],
@@ -469,8 +472,8 @@ class IncidentController extends Controller
             'location_zone' => ['nullable', 'string', 'max:160'],
             'location_address' => ['nullable', 'string', 'max:500'],
             'description' => ['nullable', 'string', 'max:1200'],
-            'photo' => $this->uploadedImageRules('nullable', 'required_without:photos'),
-            'photos' => ['nullable', 'array', 'required_without:photo'],
+            'photo' => $this->uploadedImageRules('nullable'),
+            'photos' => ['nullable', 'array'],
             'photos.*' => $this->uploadedImageRules(),
         ], [
             'custom_title.required' => 'Précisez le titre de l’incident.',
@@ -483,6 +486,14 @@ class IncidentController extends Controller
             'photo.mimetypes' => 'Le fichier envoyé doit être une image valide.',
             'photos.*.mimetypes' => 'Chaque fichier envoyé doit être une image valide.',
         ]);
+
+        $validator->after(function ($validator) use ($request): void {
+            if (! $this->hasNonEmptyUploadedFiles($request, 'photo') && ! $this->hasNonEmptyUploadedFiles($request, 'photos')) {
+                $validator->errors()->add('photos', 'Ajoutez au moins une photo avant d\'envoyer le signalement.');
+            }
+        });
+
+        $validated = $validator->validate();
 
         if ($this->needsCustomIncidentTitle($validated['title'])) {
             $validated['title'] = $validated['custom_title'];
@@ -757,10 +768,16 @@ class IncidentController extends Controller
     {
         return [
             ...$rules,
+            'bail',
             'file',
-            'min:1',
             'max:20480',
             function (string $attribute, mixed $value, \Closure $fail): void {
+                if (! $this->isNonEmptyUploadedFile($value)) {
+                    $fail('La photo envoyee est vide ou invalide.');
+
+                    return;
+                }
+
                 if (! $this->isUploadedImage($value)) {
                     $this->logUnrecognizedUploadedImage($attribute, $value);
                     $fail('Le fichier envoye doit etre une image valide.');
@@ -771,28 +788,53 @@ class IncidentController extends Controller
 
     private function removeEmptyUploadedFiles(Request $request, string $field): void
     {
-        $files = $request->file($field);
+        $this->forgetConvertedUploadedFiles($request);
 
-        if (is_array($files)) {
-            $files = collect($files)
-                ->filter(fn ($file) => $file instanceof \Illuminate\Http\UploadedFile && $file->isValid() && (int) $file->getSize() > 0)
-                ->values()
-                ->all();
+        $files = $this->nonEmptyUploadedFiles($request->files->get($field));
 
-            if ($files === []) {
-                $request->files->remove($field);
+        $request->request->remove($field);
 
-                return;
-            }
-
-            $request->files->set($field, $files);
+        if ($files === []) {
+            $request->files->remove($field);
+            $this->forgetConvertedUploadedFiles($request);
 
             return;
         }
 
-        if ($files instanceof \Illuminate\Http\UploadedFile && (! $files->isValid() || (int) $files->getSize() <= 0)) {
-            $request->files->remove($field);
+        $request->files->set($field, str_ends_with($field, 's') ? $files : $files[0]);
+        $this->forgetConvertedUploadedFiles($request);
+    }
+
+    private function hasNonEmptyUploadedFiles(Request $request, string $field): bool
+    {
+        return $this->nonEmptyUploadedFiles($request->files->get($field)) !== [];
+    }
+
+    private function nonEmptyUploadedFiles(mixed $files): array
+    {
+        if (is_array($files)) {
+            return collect($files)
+                ->flatMap(fn ($file): array => $this->nonEmptyUploadedFiles($file))
+                ->values()
+                ->all();
         }
+
+        return $this->isNonEmptyUploadedFile($files) ? [$files] : [];
+    }
+
+    private function isNonEmptyUploadedFile(mixed $file): bool
+    {
+        return $file instanceof \Symfony\Component\HttpFoundation\File\UploadedFile
+            && $file->isValid()
+            && (int) $file->getSize() > 0
+            && is_file($file->getPathname());
+    }
+
+    private function forgetConvertedUploadedFiles(Request $request): void
+    {
+        $property = new \ReflectionProperty($request, 'convertedFiles');
+        $property->setAccessible(true);
+        $property->setValue($request, null);
     }
 
     private function storeUploadedImage($file, string $folder, string $prefix): string
@@ -812,7 +854,7 @@ class IncidentController extends Controller
 
     private function storeUploadedImageLocally($file, string $folder, string $prefix): string
     {
-        if (! $this->isUploadedImage($file) || (int) $file->getSize() <= 0) {
+        if (! $this->isUploadedImage($file)) {
             throw ValidationException::withMessages([
                 'photos' => 'La photo envoyee est vide ou invalide.',
             ]);
@@ -829,7 +871,7 @@ class IncidentController extends Controller
 
     private function isUploadedImage($file): bool
     {
-        if (! $file instanceof \Illuminate\Http\UploadedFile || ! $file->isValid()) {
+        if (! $this->isNonEmptyUploadedFile($file)) {
             return false;
         }
 

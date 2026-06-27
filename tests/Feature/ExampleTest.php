@@ -48,8 +48,31 @@ class ExampleTest extends TestCase
         $this->post('/incidents', [
             'title' => 'Route dégradée',
             'urgency' => 'urgent',
-        ])->assertSessionHasErrors(['photo', 'latitude', 'longitude', 'geolocation_verified']);
+        ])->assertSessionHasErrors(['photos', 'latitude', 'longitude', 'geolocation_verified']);
 
+        $this->assertDatabaseCount('incidents', 0);
+    }
+
+    public function test_public_incident_ignores_empty_photo_slot_without_minimum_size_error(): void
+    {
+        $response = $this->post('/incidents', [
+            'title' => 'Tas d ordures',
+            'urgency' => 'normal',
+            'latitude' => 6.6528,
+            'longitude' => 1.7252,
+            'geolocation_verified' => '1',
+            'photos' => [
+                UploadedFile::fake()->create('empty.jpg', 0, 'image/jpeg'),
+            ],
+        ]);
+
+        $response
+            ->assertSessionHasErrors('photos')
+            ->assertSessionDoesntHaveErrors('photos.0');
+
+        $messages = session('errors')->getBag('default')->all();
+
+        $this->assertStringNotContainsString('kilobytes', implode(' ', $messages));
         $this->assertDatabaseCount('incidents', 0);
     }
 
