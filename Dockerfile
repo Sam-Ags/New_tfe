@@ -31,6 +31,7 @@ FROM php:8.3-apache AS app
 
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public \
     DB_CONNECTION=mysql \
+    DB_DATABASE=test \
     MYSQL_ATTR_SSL_CA=/etc/ssl/certs/ca-certificates.crt
 
 RUN apt-get update \
