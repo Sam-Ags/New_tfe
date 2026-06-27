@@ -33,6 +33,7 @@ return [
         'api_key' => env('CLOUDINARY_API_KEY'),
         'api_secret' => env('CLOUDINARY_API_SECRET'),
         'folder' => env('CLOUDINARY_FOLDER', 'projetsoutenance'),
+        'ca_bundle' => env('CLOUDINARY_CA_BUNDLE'),
     ],
 
     'slack' => [
