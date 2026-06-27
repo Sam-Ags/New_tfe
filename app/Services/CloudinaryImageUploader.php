@@ -61,7 +61,9 @@ class CloudinaryImageUploader
                 ],
             ]);
         } finally {
-            fclose($handle);
+            if (is_resource($handle)) {
+                fclose($handle);
+            }
         }
 
         $data = json_decode((string) $response->getBody(), true);
