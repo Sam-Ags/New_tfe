@@ -8,9 +8,9 @@ use App\Services\CloudinaryImageUploader;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
@@ -140,9 +140,14 @@ class AuthController extends Controller
                     'message' => $exception->getMessage(),
                 ]);
 
-                throw ValidationException::withMessages([
-                    'profile_photo' => 'La photo n’a pas pu être envoyée vers Cloudinary. Vérifiez les permissions de la clé API ou utilisez un upload preset non signé.',
-                ]);
+                $directory = public_path('uploads/profiles');
+                File::ensureDirectoryExists($directory);
+
+                $extension = strtolower($file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'jpg');
+                $filename = uniqid('agent_', true).'.'.$extension;
+                $file->move($directory, $filename);
+
+                $validated['profile_photo_path'] = 'uploads/profiles/'.$filename;
             }
         }
 

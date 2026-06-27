@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
@@ -770,10 +771,25 @@ class IncidentController extends Controller
                 'message' => $exception->getMessage(),
             ]);
 
+            return $this->storeUploadedImageLocally($file, $folder, $prefix);
+        }
+    }
+
+    private function storeUploadedImageLocally($file, string $folder, string $prefix): string
+    {
+        if (! $this->isUploadedImage($file) || (int) $file->getSize() <= 0) {
             throw ValidationException::withMessages([
-                'photos' => 'La photo n’a pas pu être envoyée vers Cloudinary. Vérifiez les permissions de la clé API ou utilisez un upload preset non signé.',
+                'photos' => 'La photo envoyee est vide ou invalide.',
             ]);
         }
+
+        $directory = public_path('uploads/'.$folder);
+        File::ensureDirectoryExists($directory);
+
+        $filename = uniqid($prefix.'_', true).'.'.$this->uploadedImageExtension($file);
+        $file->move($directory, $filename);
+
+        return 'uploads/'.$folder.'/'.$filename;
     }
 
     private function isUploadedImage($file): bool
