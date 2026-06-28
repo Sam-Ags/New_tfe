@@ -424,7 +424,7 @@
                                 <span class="material-symbols-outlined mb-3 text-4xl text-primary transition group-hover:scale-110">folder_open</span>
                                 <span class="font-semibold text-primary">Choisir des fichiers</span>
                                 <span class="mt-1 text-sm text-secondary">Sélectionnez une ou plusieurs images depuis la galerie.</span>
-                                <input id="photo-gallery" class="hidden" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif" multiple>
+                                <input id="photo-gallery" class="hidden" type="file" name="photos[]" accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif" multiple>
                             </label>
                         </div>
                         <input id="photo" class="hidden" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif" multiple>
@@ -496,9 +496,6 @@
         let locationCommuneIdentified = false;
         let selectedPhotos = [];
         let preparingPhotos = false;
-        const maxPhotoDimension = 960;
-        const photoCompressionQuality = 0.7;
-        const canSyncPreparedPhotos = typeof DataTransfer !== 'undefined';
         const acceptedPhotoExtensions = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'heic', 'heif']);
         const heicPhotoTypes = new Set(['image/heic', 'image/heif']);
 
@@ -688,23 +685,8 @@
         });
 
         function syncPhotoInputFiles() {
-            if (!canSyncPreparedPhotos) {
-                photoInput.disabled = true;
-                photoInput.removeAttribute('name');
-                return;
-            }
-
-            const dataTransfer = new DataTransfer();
-            selectedPhotos
-                .filter((file) => file && file.size > 0)
-                .forEach((file) => dataTransfer.items.add(file));
-            photoInput.files = dataTransfer.files;
-            photoInput.disabled = dataTransfer.files.length === 0;
-            if (dataTransfer.files.length > 0) {
-                photoInput.name = 'photos[]';
-            } else {
-                photoInput.removeAttribute('name');
-            }
+            photoInput.disabled = true;
+            photoInput.removeAttribute('name');
         }
 
         function cameraPhotoFile() {
@@ -883,8 +865,26 @@
             renderPhotoPreviews();
         });
 
+        function useNativeSelectedPhotoFiles(files) {
+            const incomingFiles = Array.from(files || []);
+            selectedPhotos = incomingFiles.filter((file) => file && file.size > 0 && isSupportedPhotoFile(file));
+            preparingPhotos = false;
+            photoLabel.classList.remove('text-error');
+
+            if (incomingFiles.length > 0 && selectedPhotos.length === 0) {
+                photoGalleryInput.value = '';
+                photoLabel.textContent = 'Le fichier choisi n est pas une image compatible.';
+                photoLabel.classList.add('text-error');
+                renderPhotoPreviews();
+
+                return;
+            }
+
+            renderPhotoPreviews();
+        }
+
         photoGalleryInput.addEventListener('change', () => {
-            addSelectedPhotoFiles(photoGalleryInput.files);
+            useNativeSelectedPhotoFiles(photoGalleryInput.files);
         });
 
         photoPreviewWrap.addEventListener('click', (event) => {
@@ -895,6 +895,14 @@
                 photoCameraInput.value = '';
             } else {
                 selectedPhotos.splice(Number(button.dataset.removePhoto), 1);
+                if (typeof DataTransfer !== 'undefined') {
+                    const dataTransfer = new DataTransfer();
+                    selectedPhotos.forEach((file) => dataTransfer.items.add(file));
+                    photoGalleryInput.files = dataTransfer.files;
+                } else {
+                    photoGalleryInput.value = '';
+                    selectedPhotos = [];
+                }
             }
 
             syncPhotoInputFiles();
@@ -902,24 +910,10 @@
         });
 
         function preparePhotoInputsForSubmit() {
-            photoCameraInput.disabled = !cameraPhotoFile();
-
-            if (canSyncPreparedPhotos) {
-                syncPhotoInputFiles();
-                photoGalleryInput.removeAttribute('name');
-                photoGalleryInput.disabled = true;
-                return;
-            }
-
-            photoInput.disabled = true;
-            photoInput.removeAttribute('name');
-            if (photoGalleryInput.files && photoGalleryInput.files.length > 0) {
-                photoGalleryInput.name = 'photos[]';
-                photoGalleryInput.disabled = false;
-            } else {
-                photoGalleryInput.removeAttribute('name');
-                photoGalleryInput.disabled = true;
-            }
+            syncPhotoInputFiles();
+            photoCameraInput.disabled = false;
+            photoGalleryInput.disabled = false;
+            photoGalleryInput.name = 'photos[]';
         }
 
         form.addEventListener('submit', (event) => {

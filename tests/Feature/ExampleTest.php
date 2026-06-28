@@ -88,6 +88,7 @@ class ExampleTest extends TestCase
             ->get('http://smartcitybenin.online/signaler')
             ->assertOk()
             ->assertSee('action="https://smartcitybenin.online/incidents"', false)
+            ->assertSee('id="photo-gallery" class="hidden" type="file" name="photos[]"', false)
             ->assertDontSee('action="http://smartcitybenin.online/incidents"', false);
     }
 
@@ -127,6 +128,38 @@ class ExampleTest extends TestCase
         $this->assertSame(6.3812, $incident->latitude);
         $this->assertSame(2.4018, $incident->longitude);
         $this->assertSame(1, Incident::count());
+    }
+
+    public function test_guest_can_submit_public_incident_with_gallery_photos_array(): void
+    {
+        $commune = Commune::create([
+            'name' => 'Lokossa',
+            'department' => 'Mono',
+            'latitude' => 6.6533,
+            'longitude' => 1.7190,
+        ]);
+
+        $this->post('/incidents', [
+            'title' => 'Tas d ordures',
+            'urgency' => 'normal',
+            'latitude' => 6.6528,
+            'longitude' => 1.7252,
+            'geolocation_verified' => '1',
+            'geolocation_accuracy' => 25,
+            'location_country' => 'Benin',
+            'location_city' => 'Lokossa',
+            'location_zone' => 'Centre',
+            'location_address' => 'Centre, Lokossa, Mono, Benin',
+            'photos' => [
+                UploadedFile::fake()->image('incident-gallery.jpg'),
+            ],
+        ])->assertRedirect(route('incidents.public.create'));
+
+        $this->assertDatabaseHas('incidents', [
+            'title' => 'Tas d ordures',
+            'commune_id' => $commune->id,
+            'district' => 'Centre - Lokossa - Benin',
+        ]);
     }
 
     public function test_public_incident_is_sent_to_the_commune_identified_by_gps_address(): void
