@@ -88,6 +88,7 @@ class ExampleTest extends TestCase
             ->get('http://smartcitybenin.online/signaler')
             ->assertOk()
             ->assertSee('action="https://smartcitybenin.online/incidents"', false)
+            ->assertSee('id="photo-camera" class="hidden" type="file" name="photos[]"', false)
             ->assertSee('id="photo-gallery" class="hidden" type="file" name="photos[]"', false)
             ->assertDontSee('action="http://smartcitybenin.online/incidents"', false);
     }
@@ -130,7 +131,7 @@ class ExampleTest extends TestCase
         $this->assertSame(1, Incident::count());
     }
 
-    public function test_guest_can_submit_public_incident_with_gallery_photos_array(): void
+    public function test_guest_can_submit_public_incident_with_photos_array(): void
     {
         $commune = Commune::create([
             'name' => 'Lokossa',
@@ -151,7 +152,7 @@ class ExampleTest extends TestCase
             'location_zone' => 'Centre',
             'location_address' => 'Centre, Lokossa, Mono, Benin',
             'photos' => [
-                UploadedFile::fake()->image('incident-gallery.jpg'),
+                UploadedFile::fake()->image('incident-camera.jpg'),
             ],
         ])->assertRedirect(route('incidents.public.create'));
 

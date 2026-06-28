@@ -418,7 +418,7 @@
                                 <span class="material-symbols-outlined mb-3 text-4xl text-primary transition group-hover:scale-110">photo_camera</span>
                                 <span class="font-semibold text-primary">Prendre une photo</span>
                                 <span class="mt-1 text-sm text-secondary">Prenez la photo avec l’appareil du téléphone.</span>
-                                <input id="photo-camera" class="hidden" type="file" name="photo" accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif" capture="environment">
+                                <input id="photo-camera" class="hidden" type="file" name="photos[]" accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif" capture="environment">
                             </label>
                             <label class="group flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-outline-variant bg-surface-container-low p-6 text-center transition hover:bg-surface-container">
                                 <span class="material-symbols-outlined mb-3 text-4xl text-primary transition group-hover:scale-110">folder_open</span>
@@ -496,6 +496,8 @@
         let locationCommuneIdentified = false;
         let selectedPhotos = [];
         let preparingPhotos = false;
+        const maxPhotoDimension = 960;
+        const photoCompressionQuality = 0.7;
         const acceptedPhotoExtensions = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'heic', 'heif']);
         const heicPhotoTypes = new Set(['image/heic', 'image/heif']);
 
@@ -769,9 +771,6 @@
             preparingPhotos = false;
             syncPhotoInputFiles();
             renderPhotoPreviews();
-            if (canSyncPreparedPhotos) {
-                photoGalleryInput.value = '';
-            }
         }
 
         function preparePhotoFile(file) {
@@ -862,6 +861,11 @@
 
         photoCameraInput.addEventListener('change', () => {
             photoLabel.classList.remove('text-error');
+            if (photoCameraInput.files && photoCameraInput.files.length > 0 && !cameraPhotoFile()) {
+                photoCameraInput.value = '';
+                photoLabel.textContent = 'La photo prise est vide ou incompatible.';
+                photoLabel.classList.add('text-error');
+            }
             renderPhotoPreviews();
         });
 
@@ -913,6 +917,7 @@
             syncPhotoInputFiles();
             photoCameraInput.disabled = false;
             photoGalleryInput.disabled = false;
+            photoCameraInput.name = 'photos[]';
             photoGalleryInput.name = 'photos[]';
         }
 
