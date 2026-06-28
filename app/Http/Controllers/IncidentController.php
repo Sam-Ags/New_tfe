@@ -488,7 +488,12 @@ class IncidentController extends Controller
         ]);
 
         $validator->after(function ($validator) use ($request): void {
-            if (! $this->hasNonEmptyUploadedFiles($request, 'photo') && ! $this->hasNonEmptyUploadedFiles($request, 'photos')) {
+            if (
+                ! $this->hasNonEmptyUploadedFiles($request, 'photo')
+                && ! $this->hasNonEmptyUploadedFiles($request, 'photos')
+                && ! $this->hasUploadedFileAttempt($request, 'photo')
+                && ! $this->hasUploadedFileAttempt($request, 'photos')
+            ) {
                 $validator->errors()->add('photos', 'Ajoutez au moins une photo avant d\'envoyer le signalement.');
             }
         });
@@ -769,9 +774,13 @@ class IncidentController extends Controller
         return [
             ...$rules,
             'bail',
-            'file',
-            'max:20480',
             function (string $attribute, mixed $value, \Closure $fail): void {
+                if ($value instanceof \Symfony\Component\HttpFoundation\File\UploadedFile && ! $value->isValid()) {
+                    $fail($this->uploadErrorMessage($value));
+
+                    return;
+                }
+
                 if (! $this->isNonEmptyUploadedFile($value)) {
                     $fail('La photo envoyee est vide ou invalide.');
 
@@ -783,6 +792,8 @@ class IncidentController extends Controller
                     $fail('Le fichier envoye doit etre une image valide.');
                 }
             },
+            'file',
+            'max:51200',
         ];
     }
 
@@ -790,7 +801,7 @@ class IncidentController extends Controller
     {
         $this->forgetConvertedUploadedFiles($request);
 
-        $files = $this->nonEmptyUploadedFiles($request->files->get($field));
+        $files = $this->uploadedFilesExceptEmpty($request->files->get($field));
 
         $request->request->remove($field);
 
@@ -808,6 +819,35 @@ class IncidentController extends Controller
     private function hasNonEmptyUploadedFiles(Request $request, string $field): bool
     {
         return $this->nonEmptyUploadedFiles($request->files->get($field)) !== [];
+    }
+
+    private function hasUploadedFileAttempt(Request $request, string $field): bool
+    {
+        return $this->uploadedFilesExceptEmpty($request->files->get($field)) !== [];
+    }
+
+    private function uploadedFilesExceptEmpty(mixed $files): array
+    {
+        if (is_array($files)) {
+            return collect($files)
+                ->flatMap(fn ($file): array => $this->uploadedFilesExceptEmpty($file))
+                ->values()
+                ->all();
+        }
+
+        if (! $files instanceof \Symfony\Component\HttpFoundation\File\UploadedFile) {
+            return [];
+        }
+
+        if ($files->getError() === UPLOAD_ERR_NO_FILE) {
+            return [];
+        }
+
+        if ($files->isValid() && (int) $files->getSize() <= 0) {
+            return [];
+        }
+
+        return [$files];
     }
 
     private function nonEmptyUploadedFiles(mixed $files): array
@@ -828,6 +868,15 @@ class IncidentController extends Controller
             && $file->isValid()
             && (int) $file->getSize() > 0
             && is_file($file->getPathname());
+    }
+
+    private function uploadErrorMessage(\Symfony\Component\HttpFoundation\File\UploadedFile $file): string
+    {
+        return match ($file->getError()) {
+            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'La photo est trop lourde. Utilisez une image de moins de 50 Mo.',
+            UPLOAD_ERR_PARTIAL => 'La photo n a pas ete envoyee completement. Reessayez avec une bonne connexion.',
+            default => 'La photo n a pas pu etre envoyee. Reessayez ou choisissez une autre image.',
+        };
     }
 
     private function forgetConvertedUploadedFiles(Request $request): void

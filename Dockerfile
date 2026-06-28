@@ -61,6 +61,13 @@ RUN apt-get update \
     && sed -ri -e "s!/var/www/html!${APACHE_DOCUMENT_ROOT}!g" /etc/apache2/sites-available/*.conf /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf \
     && rm -rf /var/lib/apt/lists/*
 
+RUN { \
+        echo "upload_max_filesize=64M"; \
+        echo "post_max_size=72M"; \
+        echo "memory_limit=256M"; \
+        echo "max_file_uploads=20"; \
+    } > /usr/local/etc/php/conf.d/uploads.ini
+
 WORKDIR /var/www/html
 
 COPY --chown=www-data:www-data . .

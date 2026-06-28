@@ -76,6 +76,32 @@ class ExampleTest extends TestCase
         $this->assertDatabaseCount('incidents', 0);
     }
 
+    public function test_public_incident_reports_upload_error_without_missing_photo_message(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'oversize-upload-');
+        file_put_contents($path, 'not-empty');
+
+        $response = $this->post('/incidents', [
+            'title' => 'Tas d ordures',
+            'urgency' => 'normal',
+            'latitude' => 6.6528,
+            'longitude' => 1.7252,
+            'geolocation_verified' => '1',
+            'photos' => [
+                new UploadedFile($path, 'camera.jpg', 'image/jpeg', UPLOAD_ERR_INI_SIZE, true),
+            ],
+        ]);
+
+        $response->assertSessionHasErrors('photos.0');
+
+        $messages = session('errors')->getBag('default')->all();
+
+        $this->assertStringNotContainsString('Ajoutez au moins une photo', implode(' ', $messages));
+        $this->assertDatabaseCount('incidents', 0);
+
+        @unlink($path);
+    }
+
     public function test_public_incident_form_uses_https_action_behind_proxy(): void
     {
         $this->withServerVariables([
