@@ -567,7 +567,7 @@ class IncidentController extends Controller
             });
 
         return redirect()
-            ->route('incidents.public.create')
+            ->route('incidents.public.home')
             ->with('success', 'Signalement envoyé. Merci pour votre contribution.');
     }
 

@@ -79,6 +79,12 @@
 
     <main class="mx-auto grid min-h-[calc(100vh-5.5rem)] w-full max-w-7xl place-items-center px-6 pb-12">
         <section class="flex w-full max-w-3xl flex-col items-center text-center">
+            @if (session('success'))
+                <div class="mb-6 w-full rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-left font-semibold text-emerald-800">
+                    {{ session('success') }}
+                </div>
+            @endif
+
             <p class="mb-6 text-2xl font-extrabold text-primary sm:text-3xl">SmartCity</p>
 
             <div class="home-logo grid h-52 w-52 place-items-center overflow-hidden rounded-full bg-white ring-1 ring-outline-variant sm:h-64 sm:w-64">

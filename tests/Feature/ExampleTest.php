@@ -15,7 +15,10 @@ class ExampleTest extends TestCase
 
     public function test_public_homepage_and_admin_dashboard_are_accessible(): void
     {
-        $this->get('/')->assertStatus(200);
+        $this->get('/')
+            ->assertStatus(200)
+            ->assertSee('Signaler un incident')
+            ->assertDontSee('id="public-incident-form"', false);
 
         $admin = User::factory()->create([
             'role' => 'admin',
@@ -140,7 +143,7 @@ class ExampleTest extends TestCase
             'location_zone' => 'Akpakpa',
             'location_address' => 'Akpakpa, Cotonou, Littoral, Bénin',
             'photo' => UploadedFile::fake()->image('incident.jpg'),
-        ])->assertRedirect(route('incidents.public.create'));
+        ])->assertRedirect(route('incidents.public.home'));
 
         $this->assertDatabaseHas('incidents', [
             'title' => 'Route dégradée',
@@ -180,7 +183,7 @@ class ExampleTest extends TestCase
             'photos' => [
                 UploadedFile::fake()->image('incident-camera.jpg'),
             ],
-        ])->assertRedirect(route('incidents.public.create'));
+        ])->assertRedirect(route('incidents.public.home'));
 
         $this->assertDatabaseHas('incidents', [
             'title' => 'Tas d ordures',
@@ -217,7 +220,7 @@ class ExampleTest extends TestCase
             'location_zone' => 'Zogbadje',
             'location_address' => 'Zogbadje, Abomey-Calavi, Atlantique, Benin',
             'photo' => UploadedFile::fake()->image('lampadaire.jpg'),
-        ])->assertRedirect(route('incidents.public.create'));
+        ])->assertRedirect(route('incidents.public.home'));
 
         $this->assertDatabaseHas('incidents', [
             'title' => 'Lampadaire en panne',
