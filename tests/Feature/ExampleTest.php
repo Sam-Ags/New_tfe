@@ -76,6 +76,21 @@ class ExampleTest extends TestCase
         $this->assertDatabaseCount('incidents', 0);
     }
 
+    public function test_public_incident_form_uses_https_action_behind_proxy(): void
+    {
+        $this->withServerVariables([
+            'HTTP_HOST' => 'smartcitybenin.online',
+            'HTTP_X_FORWARDED_HOST' => 'smartcitybenin.online',
+            'HTTP_X_FORWARDED_PROTO' => 'https',
+            'HTTP_X_FORWARDED_PORT' => '443',
+            'REMOTE_ADDR' => '10.0.0.10',
+        ])
+            ->get('http://smartcitybenin.online/signaler')
+            ->assertOk()
+            ->assertSee('action="https://smartcitybenin.online/incidents"', false)
+            ->assertDontSee('action="http://smartcitybenin.online/incidents"', false);
+    }
+
     public function test_guest_can_submit_public_incident_with_title_urgency_and_photo(): void
     {
         $commune = Commune::create([
