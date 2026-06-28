@@ -1461,7 +1461,7 @@
                     Priorité : ${incident.priorityLabel}<br>
                     Agent : ${incident.agent || 'Agent non affecté'}<br>
                     ${incident.description ? '<br>' + incident.description : ''}
-                    ${incident.photos?.length ? `<br><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px;">${incident.photos.map((photo) => `<img src="${photo}" alt="Photo" style="width:100%;height:86px;object-fit:cover;border-radius:6px;">`).join('')}</div>` : ''}
+                    ${incident.photos?.length ? `<br><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px;">${incident.photos.map((photo) => `<a href="${photo}" target="_blank" style="display:block;text-decoration:none;"><img src="${photo}" alt="Photo" style="width:100%;height:86px;object-fit:cover;border-radius:6px;" onerror="this.style.display='none';this.nextElementSibling.style.display='grid';"><span style="display:none;width:100%;height:86px;place-items:center;border-radius:6px;background:#eef2f7;color:#52616f;font-size:12px;font-weight:700;text-align:center;">Photo indisponible</span></a>`).join('')}</div>` : ''}
                     ${canAddToDashboard && !dashboardIncidentIds.has(incident.id) ? `<br><button class="popup-dashboard" type="button" data-incident-id="${incident.id}">Ajouter au dashboard</button>` : ''}
                 `);
                 marker.on('mouseover', () => marker.openPopup());

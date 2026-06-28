@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Commune;
 use App\Models\Incident;
+use App\Models\UploadedMedia;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -18,6 +19,7 @@ class ExampleTest extends TestCase
         $this->get('/')
             ->assertStatus(200)
             ->assertSee('Signaler un incident')
+            ->assertSee('/signaler?formulaire=1', false)
             ->assertDontSee('id="public-incident-form"', false);
 
         $admin = User::factory()->create([
@@ -107,6 +109,9 @@ class ExampleTest extends TestCase
 
     public function test_public_incident_form_uses_https_action_behind_proxy(): void
     {
+        $this->get('/signaler')
+            ->assertRedirect(route('incidents.public.home'));
+
         $this->withServerVariables([
             'HTTP_HOST' => 'smartcitybenin.online',
             'HTTP_X_FORWARDED_HOST' => 'smartcitybenin.online',
@@ -114,12 +119,29 @@ class ExampleTest extends TestCase
             'HTTP_X_FORWARDED_PORT' => '443',
             'REMOTE_ADDR' => '10.0.0.10',
         ])
-            ->get('http://smartcitybenin.online/signaler')
+            ->get('http://smartcitybenin.online/signaler?formulaire=1')
             ->assertOk()
             ->assertSee('action="https://smartcitybenin.online/incidents"', false)
+            ->assertSee('Retour a l&#039;accueil', false)
             ->assertSee('id="photo-camera" class="hidden" type="file" name="photos[]"', false)
             ->assertSee('id="photo-gallery" class="hidden" type="file" name="photos[]"', false)
             ->assertDontSee('action="http://smartcitybenin.online/incidents"', false);
+    }
+
+    public function test_uploaded_media_can_be_served_as_image(): void
+    {
+        $media = UploadedMedia::create([
+            'uuid' => '11111111-1111-4111-8111-111111111111',
+            'original_name' => 'incident.jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 4,
+            'contents' => base64_encode('test'),
+        ]);
+
+        $this->get(route('media.show', $media->uuid))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/jpeg')
+            ->assertSee('test', false);
     }
 
     public function test_guest_can_submit_public_incident_with_title_urgency_and_photo(): void

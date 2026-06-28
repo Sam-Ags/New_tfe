@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Commune;
 use App\Models\Incident;
+use App\Models\UploadedMedia;
 use App\Models\UrbanNotification;
 use App\Models\User;
 use App\Services\CloudinaryImageUploader;
@@ -11,9 +12,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -39,8 +40,12 @@ class IncidentController extends Controller
         return view('incidents.home');
     }
 
-    public function publicCreate(): View
+    public function publicCreate(Request $request): View|RedirectResponse
     {
+        if (! $request->has('formulaire') && ! session()->has('_old_input') && ! $request->session()->get('errors')) {
+            return redirect()->route('incidents.public.home');
+        }
+
         return view('incidents.public', [
             'titleOptions' => Incident::TITLE_OPTIONS,
             'supportedCommunes' => Commune::orderBy('name')->pluck('name')->values(),
@@ -191,13 +196,13 @@ class IncidentController extends Controller
                                 'categoryLabel' => $incident->categoryLabel(),
                                 'date' => $incident->created_at->format('d/m/Y H:i'),
                                 'updated' => $incident->updated_at->format('d/m/Y H:i'),
-                                'completionPhoto' => $incident->completion_photo_path ? asset($incident->completion_photo_path) : null,
+                                'completionPhoto' => $this->mediaUrl($incident->completion_photo_path),
                                 'completionPhotos' => $incident->completionPhotos
                                     ->pluck('path')
                                     ->prepend($incident->completion_photo_path)
                                     ->filter()
                                     ->unique()
-                                    ->map(fn (string $path) => asset($path))
+                                    ->map(fn (string $path) => $this->mediaUrl($path))
                                     ->values(),
                             ])
                             ->values(),
@@ -222,8 +227,8 @@ class IncidentController extends Controller
                 'description' => $incident->description,
                 'commune' => $incident->commune?->name,
                 'agent' => $incident->assignedAgent?->name ?? $incident->assigned_to,
-                'photo' => $incident->photo_path ? asset($incident->photo_path) : null,
-                'photos' => $incident->photos->pluck('path')->prepend($incident->photo_path)->filter()->unique()->map(fn (string $path) => asset($path))->values(),
+                'photo' => $this->mediaUrl($incident->photo_path),
+                'photos' => $incident->photos->pluck('path')->prepend($incident->photo_path)->filter()->unique()->map(fn (string $path) => $this->mediaUrl($path))->values(),
                 'date' => $incident->created_at->format('d/m/Y H:i'),
                 'dashboardUrl' => route('incidents.dashboard.store', $incident, false),
                 'latitude' => $incident->latitude,
@@ -879,6 +884,19 @@ class IncidentController extends Controller
         };
     }
 
+    private function mediaUrl(?string $path): ?string
+    {
+        if (! filled($path)) {
+            return null;
+        }
+
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            return $path;
+        }
+
+        return asset(ltrim($path, '/'));
+    }
+
     private function forgetConvertedUploadedFiles(Request $request): void
     {
         $property = new \ReflectionProperty($request, 'convertedFiles');
@@ -897,11 +915,11 @@ class IncidentController extends Controller
                 'message' => $exception->getMessage(),
             ]);
 
-            return $this->storeUploadedImageLocally($file, $folder, $prefix);
+            return $this->storeUploadedImageInDatabase($file);
         }
     }
 
-    private function storeUploadedImageLocally($file, string $folder, string $prefix): string
+    private function storeUploadedImageInDatabase($file): string
     {
         if (! $this->isUploadedImage($file)) {
             throw ValidationException::withMessages([
@@ -909,13 +927,24 @@ class IncidentController extends Controller
             ]);
         }
 
-        $directory = public_path('uploads/'.$folder);
-        File::ensureDirectoryExists($directory);
+        $uuid = (string) Str::uuid();
+        $contents = file_get_contents($file->getPathname());
 
-        $filename = uniqid($prefix.'_', true).'.'.$this->uploadedImageExtension($file);
-        $file->move($directory, $filename);
+        if ($contents === false || $contents === '') {
+            throw ValidationException::withMessages([
+                'photos' => 'La photo envoyee est vide ou invalide.',
+            ]);
+        }
 
-        return 'uploads/'.$folder.'/'.$filename;
+        UploadedMedia::create([
+            'uuid' => $uuid,
+            'original_name' => $file->getClientOriginalName(),
+            'mime_type' => $file->getMimeType() ?: $file->getClientMimeType() ?: 'application/octet-stream',
+            'size' => strlen($contents),
+            'contents' => base64_encode($contents),
+        ]);
+
+        return 'media/'.$uuid;
     }
 
     private function isUploadedImage($file): bool

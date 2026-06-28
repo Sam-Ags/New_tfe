@@ -3,12 +3,14 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AuthorityController;
 use App\Http\Controllers\IncidentController;
+use App\Http\Controllers\MediaController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [IncidentController::class, 'publicHome'])->name('incidents.public.home');
 Route::get('/signaler', [IncidentController::class, 'publicCreate'])->name('incidents.public.create');
 Route::post('/incidents', [IncidentController::class, 'storePublic'])->middleware('throttle:10,1')->name('incidents.store');
 Route::get('/admin', [AuthController::class, 'showAdminLogin'])->name('admin.login');
+Route::get('/media/{uuid}', [MediaController::class, 'show'])->whereUuid('uuid')->name('media.show');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');

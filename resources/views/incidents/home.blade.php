@@ -95,7 +95,7 @@
                 Ensemble, construisons une ville plus intelligente et plus sûre.
             </h1>
 
-            <a class="home-action mt-8 inline-flex min-h-14 items-center justify-center gap-3 rounded-full bg-primary px-8 py-4 text-base font-bold text-white transition hover:bg-primary-container focus:outline-none focus:ring-4 focus:ring-primary/20 sm:text-lg" href="{{ route('incidents.public.create') }}">
+            <a class="home-action mt-8 inline-flex min-h-14 items-center justify-center gap-3 rounded-full bg-primary px-8 py-4 text-base font-bold text-white transition hover:bg-primary-container focus:outline-none focus:ring-4 focus:ring-primary/20 sm:text-lg" href="{{ route('incidents.public.create', ['formulaire' => 1]) }}">
                 <span class="material-symbols-outlined">add_location_alt</span>
                 Signaler un incident
             </a>
