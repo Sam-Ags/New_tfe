@@ -11,7 +11,7 @@ class UploadedMedia extends Model
     protected $fillable = [
         'uuid',
         'original_name',
-        'mime_type',
+        'mime_type' ,
         'size',
         'contents',
     ];
