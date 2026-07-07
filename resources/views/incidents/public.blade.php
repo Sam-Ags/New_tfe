@@ -319,10 +319,6 @@
     <main class="mx-auto flex min-h-screen max-w-7xl flex-col px-6 pb-16 pt-28 md:px-8">
         <section class="public-heading mx-auto mb-12 w-full max-w-5xl text-center">
             <h1 class="public-heading-title font-bold">Citoyens connectés, communes réactives</h1>
-            <a class="mt-5 inline-flex items-center justify-center gap-2 rounded-lg border border-outline-variant bg-white px-4 py-2 text-sm font-bold text-primary shadow-sm transition hover:bg-surface-container-low" href="{{ route('incidents.public.home') }}">
-                <span class="material-symbols-outlined text-lg">arrow_back</span>
-                Retour a l'accueil
-            </a>
         </section>
 
         @if (session('success'))
